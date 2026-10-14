@@ -343,6 +343,12 @@ class Message(BaseModel):
             message_dict["files"] = [file.to_dict() for file in self.files]
         if self.audio_output:
             message_dict["audio_output"] = self.audio_output.to_dict()
+        if self.image_output:
+            message_dict["image_output"] = self.image_output.to_dict()
+        if self.video_output:
+            message_dict["video_output"] = self.video_output.to_dict()
+        if self.file_output:
+            message_dict["file_output"] = self.file_output.to_dict()
 
         if self.references:
             message_dict["references"] = self.references.model_dump()
@@ -371,7 +377,7 @@ class Message(BaseModel):
         Args:
             metrics (bool): Whether to log the metrics.
             level (str): The level to log the message at. One of debug, info, warning, or error.
-                Defaults to debug.
+            Defaults to debug.
             use_compressed_content (bool): Whether to use compressed content.
         """
         # Everything below builds strings for the sink to discard when debug is

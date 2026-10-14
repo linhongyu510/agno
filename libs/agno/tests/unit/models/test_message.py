@@ -2,6 +2,9 @@
 
 import json
 
+import pytest
+
+from agno.media import Audio, File, Image, Video
 from agno.models.message import Message
 
 
@@ -58,3 +61,38 @@ class TestGetContentString:
         content = ["item1", "item2"]
         message = Message(role="assistant", content=content)
         assert message.get_content_string() == json.dumps(content)
+
+
+class TestOutputMediaRoundTrip:
+    """Regression: model-produced output media must survive to_dict/from_dict.
+
+    `to_dict()` persisted `audio_output` but omitted `image_output`,
+    `video_output` and `file_output`, even though `from_dict()` already had
+    reconstruction branches for them. With DB-backed session persistence the
+    assistant's output media (images/video/files returned by a multimodal
+    model) were silently dropped.
+    """
+
+    @pytest.mark.parametrize(
+        ("attr", "media"),
+        [
+            ("audio_output", Audio(url="https://example.com/out.mp3")),
+            ("image_output", Image(url="https://example.com/out.png")),
+            ("video_output", Video(url="https://example.com/out.mp4")),
+            ("file_output", File(url="https://example.com/out.pdf")),
+        ],
+    )
+    def test_output_media_round_trip(self, attr, media):
+        message = Message(role="assistant", content="done", **{attr: media})
+        restored = Message.from_dict(message.to_dict())
+        round_tripped = getattr(restored, attr)
+        assert round_tripped is not None
+        assert round_tripped.url == media.url
+
+    def test_no_output_media_stays_absent(self):
+        message = Message(role="assistant", content="done")
+        d = message.to_dict()
+        assert "image_output" not in d
+        assert "video_output" not in d
+        assert "file_output" not in d
+        assert "audio_output" not in d
