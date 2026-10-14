@@ -377,7 +377,7 @@ class Message(BaseModel):
         Args:
             metrics (bool): Whether to log the metrics.
             level (str): The level to log the message at. One of debug, info, warning, or error.
-            Defaults to debug.
+                Defaults to debug.
             use_compressed_content (bool): Whether to use compressed content.
         """
         # Everything below builds strings for the sink to discard when debug is
